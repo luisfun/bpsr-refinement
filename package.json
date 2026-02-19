@@ -3,12 +3,21 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "fix": "biome check --write .",
+    "fix:unsafe": "biome check --write --unsafe .",
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "npm run build && astro preview",
     "astro": "astro"
   },
-  "dependencies": {
-    "astro": "^5.17.1"
+  "devDependencies": {
+    "@biomejs/biome": "2.4.2",
+    "astro": "5.17.3",
+    "wrangler": "4.66.0"
+  },
+  "overrides": {
+    "@cloudflare/unenv-preset": "2.13.0",
+    "miniflare": "4.20260217.0",
+    "workerd": "1.20260218.0"
   }
 }

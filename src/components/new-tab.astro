@@ -1,0 +1,14 @@
+---
+import type { HTMLAttributes } from 'astro/types'
+
+const isMyDomain = (url: unknown) =>
+  typeof url === 'string' &&
+  (/^https:\/\/([a-zA-Z0-9-]+\.)?luis\.fun/.test(url) || ['https://paimon.plus'].some(domain => url.startsWith(domain)))
+
+type Props = HTMLAttributes<'a'>
+const { href, ...rest } = Astro.props
+
+const relObj: { rel?: HTMLAttributes<'a'>['rel'] } = isMyDomain(href) ? {} : { rel: 'noreferrer' }
+---
+
+<a {...relObj} target="_blank" href={href} {...rest}><slot /></a>

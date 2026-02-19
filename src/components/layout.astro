@@ -1,0 +1,120 @@
+---
+type Props = {
+  title?: string
+}
+const { title } = Astro.props
+
+const seo = {
+  desc: 'ブループロトコル：スターレゾナンス 精練最適化ツール',
+  title: title || 'スタレゾ 精練最適化',
+  url: 'https://bpsr.luis.fun',
+  image: 'https://luis.fun/luisfun.png',
+  author: 'Luis',
+  color: '#111',
+}
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{seo.title}</title>
+    <meta name="description" content={seo.desc} />
+    <meta property="og:title" content={seo.title} />
+    <meta property="og:description" content={seo.desc} />
+    <meta property="og:url" content={seo.url} />
+    <meta property="og:image" content={seo.image} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image:alt" content={seo.desc} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:creator" content={seo.author} />
+    <meta name="msapplication-TileColor" content={seo.color} />
+    <meta name="theme-color" content={seo.color}>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="512x512" href={seo.image} />
+    <link rel="manifest" href="/manifest.webmanifest">
+  </head>
+  <body class="container">
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --mono-0: #000;
+    --mono-1: #111;
+    --mono-2: #222;
+    --mono-3: #333;
+    --mono-a: #aaa;
+    --mono-e: #eee;
+    --mono-f: #fff;
+    --blue-3: #58a6ff;
+    --blue-4: #388bfd;
+    --blue-5: #1f6feb;
+    --font-sans: Arial, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    --font-mono: "SF Mono", Consolas, monospace;
+    --text-0: var(--mono-f);
+    --text-1: var(--mono-e);
+    --text-2: var(--mono-a);
+    --bg-0: var(--mono-0);
+    --bg-1: var(--mono-1);
+    --bg-2: var(--mono-2);
+    --link: var(--blue-3);
+    --border: 1px solid var(--mono-3);
+  }
+  html {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-1);
+    background: var(--bg-1);
+  }
+  body {
+    margin: 0;
+  }
+  h2 {
+    margin: 0;
+  }
+  ul {
+    margin: 0;
+  }
+  a {
+    display: block;
+    color: var(--link);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  code {
+    font-family: var(--font-mono);
+  }
+  .icon-lf {
+    width: 6rem;
+    height: auto;
+    margin: auto;
+    color: var(--text-0);
+    background: var(--bg-0);
+    outline: var(--border);
+  }
+  .icon-rounded {
+    border-radius: 30.9017%;
+    overflow: hidden;
+  }
+  .flex {
+    display: flex;
+    align-items: center;
+  }
+  .flex-col {
+    flex-direction: column;
+  }
+  [data-icon] {
+    display: block;
+  }
+</style>
+
+<style>
+  .container {
+    width: 91.6667%;
+    margin: auto;
+  }
+</style>
