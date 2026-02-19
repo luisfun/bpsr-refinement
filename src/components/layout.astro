@@ -1,4 +1,6 @@
 ---
+import '../styles/global.css'
+
 type Props = {
   title?: string
 }
@@ -8,7 +10,7 @@ const seo = {
   desc: 'ブループロトコル：スターレゾナンス 精練最適化ツール',
   title: title || 'スタレゾ 精練最適化',
   url: 'https://bpsr.luis.fun',
-  image: 'https://luis.fun/luisfun.png',
+  // image: 'https://luis.fun/luisfun.png',
   author: 'Luis',
   color: '#111',
 }
@@ -24,7 +26,7 @@ const seo = {
     <meta property="og:title" content={seo.title} />
     <meta property="og:description" content={seo.desc} />
     <meta property="og:url" content={seo.url} />
-    <meta property="og:image" content={seo.image} />
+    <!--<meta property="og:image" content={seo.image} />-->
     <meta property="og:type" content="website" />
     <meta property="og:image:alt" content={seo.desc} />
     <meta name="twitter:card" content="summary" />
@@ -32,7 +34,7 @@ const seo = {
     <meta name="msapplication-TileColor" content={seo.color} />
     <meta name="theme-color" content={seo.color}>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="512x512" href={seo.image} />
+    <!--<link rel="apple-touch-icon" sizes="512x512" href={seo.image} />-->
     <link rel="manifest" href="/manifest.webmanifest">
   </head>
   <body class="container">
@@ -65,7 +67,7 @@ const seo = {
   }
   html {
     font-family: var(--font-sans);
-    font-size: 16px;
+    font-size: 100%;
     line-height: 1.5;
     color: var(--text-1);
     background: var(--bg-1);
@@ -87,28 +89,6 @@ const seo = {
   }
   code {
     font-family: var(--font-mono);
-  }
-  .icon-lf {
-    width: 6rem;
-    height: auto;
-    margin: auto;
-    color: var(--text-0);
-    background: var(--bg-0);
-    outline: var(--border);
-  }
-  .icon-rounded {
-    border-radius: 30.9017%;
-    overflow: hidden;
-  }
-  .flex {
-    display: flex;
-    align-items: center;
-  }
-  .flex-col {
-    flex-direction: column;
-  }
-  [data-icon] {
-    display: block;
   }
 </style>
 

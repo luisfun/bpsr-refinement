@@ -10,10 +10,15 @@
     "preview": "npm run build && astro preview",
     "astro": "astro"
   },
-  "devDependencies": {
+  "dependencies": {
+    "@astrojs/svelte": "^7.2.5",
     "@biomejs/biome": "2.4.2",
-    "astro": "5.17.3",
-    "wrangler": "4.66.0"
+    "@tailwindcss/vite": "^4.2.0",
+    "astro": "^5.17.3",
+    "svelte": "^5.53.0",
+    "tailwindcss": "^4.2.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.66.0"
   },
   "overrides": {
     "@cloudflare/unenv-preset": "2.13.0",
