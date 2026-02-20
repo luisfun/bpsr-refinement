@@ -21,36 +21,69 @@ let results = $derived.by(() => {
     buri5: calcRecursiveCost(entry, 5, 0),
     buri5Moss1: calcRecursiveCost(entry, 5, 1),
     allMoss: calcRecursiveCost(entry, 5, (1 - entry.success - 0.25) / 0.03), // 成功率が100%になるまでモスを投入
-    regularAndBuri: calcBasicAndBuriCost(entry),
-    regular1AndBuri: calcBasic1AndBuriCost(entry),
+    regularAndBuri: calcRegularAndBuriCost(entry),
+    regular1AndBuri: calcRegular1AndBuriCost(entry),
+    regular1AndMoss: calcRegular1AndMossCost(entry),
+    regularburi12345: calcRegular1Buri12345Cost(entry),
+    buri54321Regular: calcBuri54321RegularCost(entry),
+    buri5AndMoss: calcBuri5MossCost(entry),
+    buri55AndMoss: calcBuri55MossCost(entry),
   }
 })
 let minimumCost = $derived(Math.min(...Object.values(results))) 
 
+const calcCostRate = $derived((entry: RefinementData, buri: number, moss: number, successRate: number) => ({
+  cost: entry.star * star2Price + entry.craft * craftPrice + buri * buriPrice + moss * mossPrice,
+  rate: Math.round(Math.min(successRate + buri * 0.05 + moss * 0.03, 1) * 100) / 100
+}))
+
 const calcRecursiveCost = (entry: RefinementData, buri: number, moss: number, successRate = entry.success): number => {
-  // 関数にしようとするとエラーになる
-  const cost = entry.star * star2Price + entry.craft * craftPrice + buri * buriPrice + moss * mossPrice
-  const rate = Math.round(Math.min(successRate + buri * 0.05 + moss * 0.03, 1) * 100) / 100
+  const { cost, rate } = calcCostRate(entry, buri, moss, successRate)
   if (1 <= rate) return cost
   return cost + calcRecursiveCost(entry, buri, moss, successRate + 0.02) * (1 - rate)
 }
 
-const calcBasicAndBuriCost = (entry: RefinementData, successRate = entry.success): number => {
+const calcRegularAndBuriCost = (entry: RefinementData, successRate = entry.success): number => {
   const buri = successRate < 0.75 ? 0 : 5
-  const moss = 0
-  const cost = entry.star * star2Price + entry.craft * craftPrice + buri * buriPrice + moss * mossPrice
-  const rate = Math.round(Math.min(successRate + buri * 0.05 + moss * 0.03, 1) * 100) / 100
+  const { cost, rate } = calcCostRate(entry, buri, 0, successRate)
   if (1 <= rate) return cost
-  return cost + calcBasicAndBuriCost(entry, successRate + 0.02) * (1 - rate)
+  return cost + calcRegularAndBuriCost(entry, successRate + 0.02) * (1 - rate)
 }
 
-const calcBasic1AndBuriCost = (entry: RefinementData, successRate = entry.success): number => {
-  const buri = 0
-  const moss = 0
-  const cost = entry.star * star2Price + entry.craft * craftPrice + buri * buriPrice + moss * mossPrice
-  const rate = Math.round(Math.min(successRate + buri * 0.05 + moss * 0.03, 1) * 100) / 100
+const calcRegular1AndBuriCost = (entry: RefinementData, successRate = entry.success): number => {
+  const { cost, rate } = calcCostRate(entry, 0, 0, successRate)
   if (1 <= rate) return cost
   return cost + calcRecursiveCost(entry, 5, 0, successRate + 0.02) * (1 - rate)
+}
+
+const calcRegular1AndMossCost = (entry: RefinementData, successRate = entry.success): number => {
+  const { cost, rate } = calcCostRate(entry, 0, 0, successRate)
+  if (1 <= rate) return cost
+  return cost + calcRecursiveCost(entry, 5, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
+}
+
+const calcRegular1Buri12345Cost = (entry: RefinementData, buri = 0, successRate = entry.success): number => {
+  const { cost, rate } = calcCostRate(entry, buri, 0, successRate)
+  if (1 <= rate) return cost
+  return cost + calcRecursiveCost(entry, Math.min(buri + 1 , 5), 0, successRate + 0.02) * (1 - rate)
+}
+
+const calcBuri54321RegularCost = (entry: RefinementData, buri = 5, successRate = entry.success): number => {
+  const { cost, rate } = calcCostRate(entry, buri, 0, successRate)
+  if (1 <= rate) return cost
+  return cost + calcBuri54321RegularCost(entry, Math.max(buri - 1, 0), successRate + 0.02) * (1 - rate)
+}
+
+const calcBuri5MossCost = (entry: RefinementData, successRate = entry.success): number => {
+  const { cost, rate } = calcCostRate(entry, 5, 0, successRate)
+  if (1 <= rate) return cost
+  return cost + calcRecursiveCost(entry, 5, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
+}
+
+const calcBuri55MossCost = (entry: RefinementData, successRate = entry.success): number => {
+  const { cost, rate } = calcCostRate(entry, 5, 0, successRate)
+  if (1 <= rate) return cost
+  return cost + calcBuri5MossCost(entry, successRate + 0.02) * (1 - rate)
 }
 </script>
 
@@ -86,7 +119,7 @@ const calcBasic1AndBuriCost = (entry: RefinementData, successRate = entry.succes
 		<h2>結果</h2>
     <table class="results-table">
       <thead>
-        <tr><th>パターン</th><th>ルーノ期待値</th></tr>
+        <tr><th>繰り返しパターン</th><th>ルーノ期待値</th></tr>
       </thead>
       <tbody>
         {#snippet tr(title: string, value: number)}
@@ -98,18 +131,36 @@ const calcBasic1AndBuriCost = (entry: RefinementData, successRate = entry.succes
         {@render tr("ブーリー3個", results.buri3)}
         {@render tr("ブーリー4個", results.buri4)}
         {@render tr("ブーリー5個", results.buri5)}
+        <tr><td class="th">特殊パターン</td><td class="th"></td></tr>
+        {@render tr("通常n回→75%でブーリー5個", results.regularAndBuri)}
+        {@render tr("通常1回→ブーリー5個", results.regular1AndBuri)}
+        {@render tr("通常1回→ブーリー1個→2個→3個→4個→5個", results.regularburi12345)}
+        {@render tr("ブーリー5個→4個→3個→2個→1個→通常", results.buri54321Regular)}
+        <tr><td class="th">モスあり</td><td class="th"></td></tr>
         {@render tr("ブーリー5個/モス1個", results.buri5Moss1)}
         {@render tr("ブーリー5個/モス100%", results.allMoss)}
-        {@render tr("通常n⇒75%でブーリー5個", results.regularAndBuri)}
-        {@render tr("通常1⇒ブーリー5個", results.regular1AndBuri)}
+        {@render tr("通常1回→ブーリー5個/モス100%", results.regular1AndMoss)}
+        {@render tr("ブーリー5個1回→ブーリー5個/モス100%", results.buri5AndMoss)}
+        {@render tr("ブーリー5個2回→ブーリー5個/モス100%", results.buri55AndMoss)}
       </tbody>
     </table>
 	</article>
+
+  <article>
+    <h2>考察</h2>
+    <p>基本的に、ブーリー5個入れて強化が効率良さそう。</p>
+    <p>モスは、ブーリー5個で1-2回失敗した後、100%まで入れるといいかも。</p>
+  </article>
 </div>
 
 <style>
   fieldset {
     width: fit-content;
     margin-bottom: 0;
+  }
+  td.th {
+    font-weight: bold;
+    border-top: 0.1875rem solid var(--pico-table-border-color);
+    border-bottom-width: 0.1875rem;
   }
 </style>

@@ -7,7 +7,7 @@ export type RefinementData = {
 
 export const weaponRefinementTable = [
   //{ level: 11, star: 4, craft: 60, success: 0.8 },
-  { level: 12, star: 4, craft: 60, success: 0.75 },
+  //{ level: 12, star: 4, craft: 60, success: 0.75 },
   { level: 13, star: 4, craft: 70, success: 0.7 },
   { level: 14, star: 6, craft: 70, success: 0.65 },
   { level: 15, star: 8, craft: 80, success: 0.6 },
@@ -20,7 +20,7 @@ export const weaponRefinementTable = [
 
 export const gearRefinementTable = [
   //{ level: 11, star: 4, craft: 30, success: 0.8 },
-  { level: 12, star: 4, craft: 30, success: 0.75 },
+  //{ level: 12, star: 4, craft: 30, success: 0.75 },
   { level: 13, star: 4, craft: 35, success: 0.7 },
   { level: 14, star: 6, craft: 35, success: 0.65 },
   { level: 15, star: 8, craft: 40, success: 0.6 },
