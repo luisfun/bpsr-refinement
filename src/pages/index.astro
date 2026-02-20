@@ -1,9 +1,11 @@
 ---
 import Layout from '../components/layout.astro'
 import Refinement from '../components/refinement.svelte'
+
+const title = 'スタレゾ 精練コスト期待値計算機'
 ---
 
-<Layout>
-	<h1>スタレゾ 精練最適化ツール</h1>
+<Layout {title} desc='ブループロトコル：スターレゾナンス 精練コスト期待値計算機'>
+	<h1>{title}</h1>
 	<Refinement client:only="svelte" />
 </Layout>
