@@ -31,6 +31,7 @@ let {
   }
   label {
     border: none;
+    margin-bottom: 0;
   }
   select {
     width: 6.75rem;
