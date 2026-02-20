@@ -37,50 +37,32 @@ const seo = {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!--<link rel="apple-touch-icon" sizes="512x512" href={seo.image} />-->
     <!--<link rel="manifest" href="/manifest.webmanifest">-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/picocss/2.1.1/pico.classless.min.css" integrity="sha512-aBdxMsQGk5sActZ9xbTShdaOySmFyjXTdNCs111Sfrsy1rJbIGWbyFqcyeqrgO+SRWl9CUQbExqCXFToUmBMZg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   </head>
-  <body class="container">
+  <body>
     <slot />
   </body>
 </html>
 
 <style is:global>
   :root {
-    --mono-0: #000;
-    --mono-1: #111;
-    --mono-2: #222;
-    --mono-3: #333;
-    --mono-a: #aaa;
-    --mono-e: #eee;
-    --mono-f: #fff;
-    --blue-3: #58a6ff;
-    --blue-4: #388bfd;
-    --blue-5: #1f6feb;
     --font-sans: Arial, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
     --font-mono: "SF Mono", Consolas, monospace;
-    --text-0: var(--mono-f);
-    --text-1: var(--mono-e);
-    --text-2: var(--mono-a);
-    --bg-0: var(--mono-0);
-    --bg-1: var(--mono-1);
-    --bg-2: var(--mono-2);
-    --link: var(--blue-3);
-    --border: 1px solid var(--mono-3);
   }
   html {
     font-family: var(--font-sans);
     font-size: 100%;
     line-height: 1.5;
-    color: var(--text-1);
-    background: var(--bg-1);
   }
-  body {
-    margin: 0;
+  h1 {
+    font-size: 1rem;
+    font-weight: normal;
   }
   h2 {
-    margin: 0;
+    font-size: 1.5em;
   }
-  ul {
-    margin: 0;
+  table {
+    width: auto;
   }
   a {
     display: block;
@@ -91,11 +73,17 @@ const seo = {
   code {
     font-family: var(--font-mono);
   }
-</style>
-
-<style>
-  .container {
-    width: 91.6667%;
-    margin: auto;
+  select {
+    cursor: pointer;
+  }
+  article > :last-child {
+    margin-bottom: 0;
+  }
+  article > :last-child > :last-child {
+    margin-bottom: 0;
+  }
+  [data-tooltip]:not(a,button,input,[role=button]) {
+    border-bottom: none;
+    cursor: inherit;
   }
 </style>

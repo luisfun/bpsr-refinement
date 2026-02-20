@@ -14,12 +14,18 @@ let results = $derived.by(() => {
   if (!entry) throw new Error(`No refinement data for level ${targetLevel}`)
   return {
     regular: calcRecursiveCost(entry, 0, 0),
-    allBuri: calcRecursiveCost(entry, 5, 0),
+    buri1: calcRecursiveCost(entry, 1, 0),
+    buri2: calcRecursiveCost(entry, 2, 0),
+    buri3: calcRecursiveCost(entry, 3, 0),
+    buri4: calcRecursiveCost(entry, 4, 0),
+    buri5: calcRecursiveCost(entry, 5, 0),
+    buri5Moss1: calcRecursiveCost(entry, 5, 1),
     allMoss: calcRecursiveCost(entry, 5, (1 - entry.success - 0.25) / 0.03), // 成功率が100%になるまでモスを投入
     regularAndBuri: calcBasicAndBuriCost(entry),
     regular1AndBuri: calcBasic1AndBuriCost(entry),
   }
 })
+let minimumCost = $derived(Math.min(...Object.values(results))) 
 
 const calcRecursiveCost = (entry: RefinementData, buri: number, moss: number, successRate = entry.success): number => {
   // 関数にしようとするとエラーになる
@@ -46,62 +52,64 @@ const calcBasic1AndBuriCost = (entry: RefinementData, successRate = entry.succes
   if (1 <= rate) return cost
   return cost + calcRecursiveCost(entry, 5, 0, successRate + 0.02) * (1 - rate)
 }
-
-$effect(() => {
-  console.log('star2Price:', star2Price)
-  console.log('craftPrice:', craftPrice)
-  console.log('buriPrice:', buriPrice)
-  console.log('mossPrice:', mossPrice)
-  console.log('isWeapon:', isWeapon)
-  console.log('targetLevel:', targetLevel)
-  console.log('results:', results)
-})
 </script>
 
 <div>
-	<section>
-  	<h2>取引所価格</h2>
-		<div>
-      <NumberSelect title="星錬結晶G2" options={star2TradePrice} bind:value={star2Price} />
-      <NumberSelect title="クラフト素材" options={craftTradePrice} bind:value={craftPrice} />
-      <NumberSelect title="ブーリーの機械片" options={buriTradePrice} bind:value={buriPrice} />
-      <NumberSelect title="モスの機械片" options={mossTradePrice} bind:value={mossPrice} />
-		</div>
-	</section>
-
-  <section>
-    <h2>強化対象</h2>
-    <div class="flex gap-4">
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input type="radio" name="refinementType" value={true} bind:group={isWeapon} />
-        <span>武器</span>
-      </label>
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input type="radio" name="refinementType" value={false} bind:group={isWeapon} />
-        <span>防具</span>
-      </label>
+  <article>
+    <h2>取引所価格</h2>
+    <div class="flex flex-wrap gap-4">
+      <NumberSelect title="星錬結晶G2" image="Starforge Crystal 2" options={star2TradePrice} bind:value={star2Price} />
+      <NumberSelect title="クラフト素材" image="Mystery Metal" options={craftTradePrice} bind:value={craftPrice} />
+      <NumberSelect title="ブーリーの機械片" image="Buri Mech Shard" options={buriTradePrice} bind:value={buriPrice} />
+      <NumberSelect title="モスの機械片" image="Moss Mech Shard" options={mossTradePrice} bind:value={mossPrice} />
     </div>
-    <NumberSelect title="目標レベル" options={weaponRefinementTable.map(t => t.level)} bind:value={targetLevel} />
-  </section>
+  </article>
 
-	<section>
+  <article class="flex flex-wrap gap-4">
+    <fieldset>
+      <h2>強化対象</h2>
+      <label>
+        <input type="radio" id="weapon" name="isWeapon" value={true} bind:group={isWeapon} />
+        武器
+      </label>
+      <label>
+        <input type="radio" id="gear" name="isWeapon" value={false} bind:group={isWeapon} />
+        防具
+      </label>
+    </fieldset>
+    <div class="flex flex-wrap gap-4">
+      <NumberSelect title="目標レベル" options={weaponRefinementTable.map(t => t.level)} bind:value={targetLevel} />
+    </div>
+  </article>
+
+	<article>
 		<h2>結果</h2>
-		<div>
-      <table class="results-table">
-        <thead>
-          <tr><th>パターン</th><th>ルーノ期待値</th></tr>
-        </thead>
-        <tbody>
-          {#snippet tr(title: string, value: number)}
-            <tr><td>{title}</td><td class="text-center">{Number(value.toFixed(0)).toLocaleString('ja-JP')}</td></tr>            
-          {/snippet}
-          {@render tr("通常", results.regular)}
-          {@render tr("ブーリー", results.allBuri)}
-          {@render tr("ブーリー/モス100%", results.allMoss)}
-          {@render tr("通常n⇒75%でブーリー", results.regularAndBuri)}
-          {@render tr("通常1⇒ブーリー", results.regular1AndBuri)}
-        </tbody>
-      </table>
-		</div>
-	</section>
+    <table class="results-table">
+      <thead>
+        <tr><th>パターン</th><th>ルーノ期待値</th></tr>
+      </thead>
+      <tbody>
+        {#snippet tr(title: string, value: number)}
+          <tr><td>{title}</td><td class={`!text-center ${value === minimumCost ? '!font-bold underline' : ''}`}>{Number(value.toFixed(0)).toLocaleString('ja-JP')}</td></tr>            
+        {/snippet}
+        {@render tr("通常", results.regular)}
+        {@render tr("ブーリー1個", results.buri1)}
+        {@render tr("ブーリー2個", results.buri2)}
+        {@render tr("ブーリー3個", results.buri3)}
+        {@render tr("ブーリー4個", results.buri4)}
+        {@render tr("ブーリー5個", results.buri5)}
+        {@render tr("ブーリー5個/モス1個", results.buri5Moss1)}
+        {@render tr("ブーリー5個/モス100%", results.allMoss)}
+        {@render tr("通常n⇒75%でブーリー5個", results.regularAndBuri)}
+        {@render tr("通常1⇒ブーリー5個", results.regular1AndBuri)}
+      </tbody>
+    </table>
+	</article>
 </div>
+
+<style>
+  fieldset {
+    width: fit-content;
+    margin-bottom: 0;
+  }
+</style>
