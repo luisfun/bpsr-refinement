@@ -19,8 +19,8 @@ export const weaponRefinementTable = [
 ] as const satisfies readonly RefinementData[]
 
 export const gearRefinementTable = [
-  //{ level: 11, star: 4, craft: 30, success: 0.8 },
-  //{ level: 12, star: 4, craft: 30, success: 0.75 },
+  //{ level: 11, star: 2, craft: 30, success: 0.8 },
+  //{ level: 12, star: 2, craft: 30, success: 0.75 },
   { level: 13, star: 2, craft: 35, success: 0.7 },
   { level: 14, star: 3, craft: 35, success: 0.65 },
   { level: 15, star: 4, craft: 40, success: 0.6 },
