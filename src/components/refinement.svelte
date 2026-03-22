@@ -1,11 +1,13 @@
 <script lang="ts">
 import NumberSelect from './number-select.svelte'
 import { gearRefinementTable, type RefinementData, weaponRefinementTable } from './refinement-table'
-import { buriTradePrice, craftTradePrice, mossTradePrice, star2TradePrice } from './tradePrice'
+import { buriTradePrice, craftTradePrice, mossTradePrice, star2TradePrice, star3TradePrice, tetuTradePrice } from './tradePrice'
 
 let star2Price = $state(star2TradePrice.at(0) || 0)
+let star3Price = $state(star3TradePrice.at(0) || 0)
 let craftPrice = $state(craftTradePrice.at(-1) || 0)
 let buriPrice = $state(buriTradePrice.at(-1) || 0)
+let tetuPrice = $state(tetuTradePrice.at(-1) || 0)
 let mossPrice = $state(mossTradePrice.at(-1) || 0)
 let isWeapon = $state(false)
 let targetLevel = $state(weaponRefinementTable.at(-1)?.level || 0)
@@ -13,14 +15,14 @@ let results = $derived.by(() => {
   const entry = (isWeapon ? weaponRefinementTable : gearRefinementTable).find(e => e.level === targetLevel)
   if (!entry) throw new Error(`No refinement data for level ${targetLevel}`)
   return {
-    regular: calcRecursiveCost(entry, 0, 0),
-    buri1: calcRecursiveCost(entry, 1, 0),
-    buri2: calcRecursiveCost(entry, 2, 0),
-    buri3: calcRecursiveCost(entry, 3, 0),
-    buri4: calcRecursiveCost(entry, 4, 0),
-    buri5: calcRecursiveCost(entry, 5, 0),
-    buri5Moss1: calcRecursiveCost(entry, 5, 1),
-    allMoss: calcRecursiveCost(entry, 5, (1 - entry.success - 0.25) / 0.03), // 成功率が100%になるまでモスを投入
+    regular: calcRecursive(entry, 0, 0),
+    buri1: calcRecursive(entry, 1, 0),
+    buri2: calcRecursive(entry, 2, 0),
+    buri3: calcRecursive(entry, 3, 0),
+    buri4: calcRecursive(entry, 4, 0),
+    buri5: calcRecursive(entry, 5, 0),
+    buri5Moss1: calcRecursive(entry, 5, 1),
+    allMoss: calcRecursive(entry, 5, (1 - entry.success - 0.25) / 0.03), // 成功率が100%になるまでモスを投入
     regularAndBuri: calcRegularAndBuriCost(entry),
     regular1AndBuri: calcRegular1AndBuriCost(entry),
     regular1AndMoss: calcRegular1AndMossCost(entry),
@@ -30,17 +32,21 @@ let results = $derived.by(() => {
     buri55AndMoss: calcBuri55MossCost(entry),
   }
 })
-let minimumCost = $derived(Math.min(...Object.values(results))) 
+let minimumCost = $derived(Math.min(...Object.values(results)))
 
 const calcCostRate = $derived((entry: RefinementData, buri: number, moss: number, successRate: number) => ({
-  cost: entry.star * star2Price + entry.craft * craftPrice + buri * buriPrice + moss * mossPrice,
-  rate: Math.round(Math.min(successRate + buri * 0.05 + moss * 0.03, 1) * 100) / 100
+  cost:
+    ('star2' in entry ? entry.star2 * star2Price : entry.star3 * star3Price) +
+    entry.craft * craftPrice +
+    buri * buriPrice +
+    moss * mossPrice,
+  rate: Math.round(Math.min(successRate + buri * 0.05 + moss * 0.03, 1) * 100) / 100,
 }))
 
-const calcRecursiveCost = (entry: RefinementData, buri: number, moss: number, successRate = entry.success): number => {
+const calcRecursive = (entry: RefinementData, buri: number, moss: number, successRate = entry.success): number => {
   const { cost, rate } = calcCostRate(entry, buri, moss, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursiveCost(entry, buri, moss, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, buri, moss, successRate + 0.02) * (1 - rate)
 }
 
 const calcRegularAndBuriCost = (entry: RefinementData, successRate = entry.success): number => {
@@ -53,19 +59,19 @@ const calcRegularAndBuriCost = (entry: RefinementData, successRate = entry.succe
 const calcRegular1AndBuriCost = (entry: RefinementData, successRate = entry.success): number => {
   const { cost, rate } = calcCostRate(entry, 0, 0, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursiveCost(entry, 5, 0, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, 5, 0, successRate + 0.02) * (1 - rate)
 }
 
 const calcRegular1AndMossCost = (entry: RefinementData, successRate = entry.success): number => {
   const { cost, rate } = calcCostRate(entry, 0, 0, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursiveCost(entry, 5, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, 5, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
 }
 
 const calcRegular1Buri12345Cost = (entry: RefinementData, buri = 0, successRate = entry.success): number => {
   const { cost, rate } = calcCostRate(entry, buri, 0, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursiveCost(entry, Math.min(buri + 1 , 5), 0, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, Math.min(buri + 1, 5), 0, successRate + 0.02) * (1 - rate)
 }
 
 const calcBuri54321RegularCost = (entry: RefinementData, buri = 5, successRate = entry.success): number => {
@@ -77,7 +83,7 @@ const calcBuri54321RegularCost = (entry: RefinementData, buri = 5, successRate =
 const calcBuri5MossCost = (entry: RefinementData, successRate = entry.success): number => {
   const { cost, rate } = calcCostRate(entry, 5, 0, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursiveCost(entry, 5, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, 5, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
 }
 
 const calcBuri55MossCost = (entry: RefinementData, successRate = entry.success): number => {
@@ -92,8 +98,10 @@ const calcBuri55MossCost = (entry: RefinementData, successRate = entry.success):
     <h2>取引所価格</h2>
     <div class="flex flex-wrap gap-4">
       <NumberSelect title="星錬結晶G2" image="Starforge Crystal 2" options={star2TradePrice} bind:value={star2Price} />
+      <NumberSelect title="星錬結晶G3" image="Starforge Crystal 3" options={star3TradePrice} bind:value={star3Price} />
       <NumberSelect title="クラフト素材" image="Mystery Metal" options={craftTradePrice} bind:value={craftPrice} />
       <NumberSelect title="ブーリーの機械片" image="Buri Mech Shard" options={buriTradePrice} bind:value={buriPrice} />
+      <NumberSelect title="隕鉄の機械片" image="Meteorite Mech Shard" options={tetuTradePrice} bind:value={tetuPrice} />
       <NumberSelect title="モスの機械片" image="Moss Mech Shard" options={mossTradePrice} bind:value={mossPrice} />
     </div>
   </article>
