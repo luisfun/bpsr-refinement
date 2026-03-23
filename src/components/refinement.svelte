@@ -1,7 +1,15 @@
 <script lang="ts">
+import NumberInput from './number-input.svelte'
 import NumberSelect from './number-select.svelte'
 import { gearRefinementTable, type RefinementData, weaponRefinementTable } from './refinement-table'
-import { buriTradePrice, craftTradePrice, mossTradePrice, star2TradePrice, star3TradePrice, tetuTradePrice } from './tradePrice'
+import {
+  buriTradePrice,
+  craftTradePrice,
+  mossTradePrice,
+  star2TradePrice,
+  star3TradePrice,
+  tetuTradePrice,
+} from './tradePrice'
 
 let star2Price = $state(star2TradePrice.at(0) || 0)
 let star3Price = $state(star3TradePrice.at(0) || 0)
@@ -11,18 +19,38 @@ let tetuPrice = $state(tetuTradePrice.at(-1) || 0)
 let mossPrice = $state(mossTradePrice.at(-1) || 0)
 let isWeapon = $state(false)
 let targetLevel = $state(weaponRefinementTable.at(-1)?.level || 0)
+let playBuri = $state(0)
+let playTetu = $state(0)
+let playMoss = $state(0)
+let entry = $derived((isWeapon ? weaponRefinementTable : gearRefinementTable).find(e => e.level === targetLevel))
+let minExpRepeat = $derived.by(() => {
+  if (!entry) throw new Error(`No refinement data for level ${targetLevel}`)
+  // buri0~5, tetu0~3, moss0~n の全パターン検索
+  const minRepeat = { cost: Infinity, buri: 0, tetu: 0, moss: 0 }
+  for (let buri = 0; buri <= 5; buri++) {
+    for (let tetu = 0; tetu <= 3; tetu++) {
+      for (let moss = 0; moss <= (1 - entry.success - (buri * 0.05 + tetu * 0.05)) / 0.03; moss++) {
+        const cost = calcRecursive(entry, buri, tetu, moss)
+        if (cost < minRepeat.cost) {
+          minRepeat.cost = cost
+          minRepeat.buri = buri
+          minRepeat.tetu = tetu
+          minRepeat.moss = moss
+        }
+      }
+    }
+  }
+  return minRepeat
+})
+let playMinCost = $derived.by(() => {
+  if (!entry) throw new Error(`No refinement data for level ${targetLevel}`)
+  return calcRecursive(entry, playBuri, playTetu, playMoss)
+})
 let results = $derived.by(() => {
-  const entry = (isWeapon ? weaponRefinementTable : gearRefinementTable).find(e => e.level === targetLevel)
   if (!entry) throw new Error(`No refinement data for level ${targetLevel}`)
   return {
-    regular: calcRecursive(entry, 0, 0),
-    buri1: calcRecursive(entry, 1, 0),
-    buri2: calcRecursive(entry, 2, 0),
-    buri3: calcRecursive(entry, 3, 0),
-    buri4: calcRecursive(entry, 4, 0),
-    buri5: calcRecursive(entry, 5, 0),
-    buri5Moss1: calcRecursive(entry, 5, 1),
-    allMoss: calcRecursive(entry, 5, (1 - entry.success - 0.25) / 0.03), // 成功率が100%になるまでモスを投入
+    buri5Moss1: calcRecursive(entry, 5, 0, 1),
+    allMoss: calcRecursive(entry, 5, 0, (1 - entry.success - 0.25) / 0.03), // 成功率が100%になるまでモスを投入
     regularAndBuri: calcRegularAndBuriCost(entry),
     regular1AndBuri: calcRegular1AndBuriCost(entry),
     regular1AndMoss: calcRegular1AndMossCost(entry),
@@ -32,62 +60,71 @@ let results = $derived.by(() => {
     buri55AndMoss: calcBuri55MossCost(entry),
   }
 })
-let minimumCost = $derived(Math.min(...Object.values(results)))
+let minimumCost = $derived(Math.min(...Object.values(results), minExpRepeat.cost))
 
-const calcCostRate = $derived((entry: RefinementData, buri: number, moss: number, successRate: number) => ({
-  cost:
-    ('star2' in entry ? entry.star2 * star2Price : entry.star3 * star3Price) +
-    entry.craft * craftPrice +
-    buri * buriPrice +
-    moss * mossPrice,
-  rate: Math.round(Math.min(successRate + buri * 0.05 + moss * 0.03, 1) * 100) / 100,
-}))
+const calcCostRate = $derived(
+  (entry: RefinementData, buri: number, tetu: number, moss: number, successRate: number) => ({
+    cost:
+      ('star2' in entry ? entry.star2 * star2Price : entry.star3 * star3Price) +
+      entry.craft * craftPrice +
+      buri * buriPrice +
+      tetu * tetuPrice +
+      moss * mossPrice,
+    rate: Math.round(Math.min(successRate + buri * 0.05 + tetu * 0.05 + moss * 0.03, 1) * 100) / 100,
+  }),
+)
 
-const calcRecursive = (entry: RefinementData, buri: number, moss: number, successRate = entry.success): number => {
-  const { cost, rate } = calcCostRate(entry, buri, moss, successRate)
+const calcRecursive = (
+  entry: RefinementData,
+  buri: number,
+  tetu: number,
+  moss: number,
+  successRate = entry.success,
+): number => {
+  const { cost, rate } = calcCostRate(entry, buri, tetu, moss, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursive(entry, buri, moss, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, buri, tetu, moss, successRate + 0.02) * (1 - rate)
 }
 
 const calcRegularAndBuriCost = (entry: RefinementData, successRate = entry.success): number => {
   const buri = successRate < 0.75 ? 0 : 5
-  const { cost, rate } = calcCostRate(entry, buri, 0, successRate)
+  const { cost, rate } = calcCostRate(entry, buri, 0, 0, successRate)
   if (1 <= rate) return cost
   return cost + calcRegularAndBuriCost(entry, successRate + 0.02) * (1 - rate)
 }
 
 const calcRegular1AndBuriCost = (entry: RefinementData, successRate = entry.success): number => {
-  const { cost, rate } = calcCostRate(entry, 0, 0, successRate)
+  const { cost, rate } = calcCostRate(entry, 0, 0, 0, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursive(entry, 5, 0, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, 5, 0, 0, successRate + 0.02) * (1 - rate)
 }
 
 const calcRegular1AndMossCost = (entry: RefinementData, successRate = entry.success): number => {
-  const { cost, rate } = calcCostRate(entry, 0, 0, successRate)
+  const { cost, rate } = calcCostRate(entry, 0, 0, 0, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursive(entry, 5, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, 5, 0, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
 }
 
 const calcRegular1Buri12345Cost = (entry: RefinementData, buri = 0, successRate = entry.success): number => {
-  const { cost, rate } = calcCostRate(entry, buri, 0, successRate)
+  const { cost, rate } = calcCostRate(entry, buri, 0, 0, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursive(entry, Math.min(buri + 1, 5), 0, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, Math.min(buri + 1, 5), 0, 0, successRate + 0.02) * (1 - rate)
 }
 
 const calcBuri54321RegularCost = (entry: RefinementData, buri = 5, successRate = entry.success): number => {
-  const { cost, rate } = calcCostRate(entry, buri, 0, successRate)
+  const { cost, rate } = calcCostRate(entry, buri, 0, 0, successRate)
   if (1 <= rate) return cost
   return cost + calcBuri54321RegularCost(entry, Math.max(buri - 1, 0), successRate + 0.02) * (1 - rate)
 }
 
 const calcBuri5MossCost = (entry: RefinementData, successRate = entry.success): number => {
-  const { cost, rate } = calcCostRate(entry, 5, 0, successRate)
+  const { cost, rate } = calcCostRate(entry, 5, 0, 0, successRate)
   if (1 <= rate) return cost
-  return cost + calcRecursive(entry, 5, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
+  return cost + calcRecursive(entry, 5, 0, (1 - successRate - 0.02 - 0.25) / 0.03, successRate + 0.02) * (1 - rate)
 }
 
 const calcBuri55MossCost = (entry: RefinementData, successRate = entry.success): number => {
-  const { cost, rate } = calcCostRate(entry, 5, 0, successRate)
+  const { cost, rate } = calcCostRate(entry, 5, 0, 0, successRate)
   if (1 <= rate) return cost
   return cost + calcBuri5MossCost(entry, successRate + 0.02) * (1 - rate)
 }
@@ -133,12 +170,7 @@ const calcBuri55MossCost = (entry: RefinementData, successRate = entry.success):
         {#snippet tr(title: string, value: number)}
           <tr><td>{title}</td><td class={`!text-center ${value === minimumCost ? '!font-bold underline' : ''}`}>{Number(value.toFixed(0)).toLocaleString('ja-JP')}</td></tr>            
         {/snippet}
-        {@render tr("通常", results.regular)}
-        {@render tr("ブーリー1個", results.buri1)}
-        {@render tr("ブーリー2個", results.buri2)}
-        {@render tr("ブーリー3個", results.buri3)}
-        {@render tr("ブーリー4個", results.buri4)}
-        {@render tr("ブーリー5個", results.buri5)}
+        {@render tr(`最適値（ブリ${minExpRepeat.buri}, 隕鉄${minExpRepeat.tetu}, モス${minExpRepeat.moss}）`, minExpRepeat.cost)}
         <tr><td class="th">特殊パターン</td><td class="th"></td></tr>
         {@render tr("通常n回→75%でブーリー5個", results.regularAndBuri)}
         {@render tr("通常1回→ブーリー5個", results.regular1AndBuri)}
@@ -153,6 +185,16 @@ const calcBuri55MossCost = (entry: RefinementData, successRate = entry.success):
       </tbody>
     </table>
 	</article>
+
+  <article>
+    <h2>遊び場<small>（繰り返しパターン確認用）</small></h2>
+    <div class="flex flex-wrap gap-4 mb-4">
+      <NumberInput title="ブリ" bind:value={playBuri} max={5} />
+      <NumberInput title="隕鉄" bind:value={playTetu} max={3} />
+      <NumberInput title="モス" bind:value={playMoss} max={entry ? (1 - entry.success - (playBuri * 0.05 + playTetu * 0.05)) / 0.03 : 33} />
+    </div>
+    <div>指定の組み合わせの期待コスト: {Number(playMinCost.toFixed(0)).toLocaleString('ja-JP')}</div>
+  </article>
 
   <article>
     <h2>考察</h2>

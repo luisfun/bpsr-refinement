@@ -1,5 +1,6 @@
 ---
 import Layout from '../components/layout.astro'
+import NewTab from '../components/new-tab.astro'
 import Refinement from '../components/refinement.svelte'
 
 const title = 'スタレゾ 精練コスト期待値計算機'
@@ -7,7 +8,8 @@ const title = 'スタレゾ 精練コスト期待値計算機'
 
 <Layout {title} desc='ブループロトコル：スターレゾナンス 精練コスト期待値計算機'>
 	<main>
-		<h1 class="my-8">{title}</h1>
+		<h1>{title}</h1>
 		<Refinement client:only="svelte" />
+		<div class="mt-4">画像：<NewTab href="https://maxroll.gg/blue-protocol">Maxroll</NewTab></div>
 	</main>
 </Layout>
